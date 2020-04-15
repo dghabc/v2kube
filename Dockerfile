@@ -1,7 +1,7 @@
 # 指定创建的基础镜像
 FROM alpine
 # 作者信息
-MAINTAINER alpine_nginx danxiaonuo
+MAINTAINER alpine_v2ray danxiaonuo
 # 语言设置
 ENV LANG en_US.UTF-8
 # 时区设置
