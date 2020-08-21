@@ -1,33 +1,57 @@
+# 构建可执行二进制文件
+# 指定构建的基础镜像
+FROM golang:alpine AS builder
+# 修改源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+# 安装相关环境依赖
+RUN apk update && apk add --no-cache git bash wget curl
+# 运行工作目录
+WORKDIR /go/src/v2ray.com/core
+# 克隆源码运行安装
+RUN git clone --progress https://github.com/v2fly/v2ray-core.git . && \
+    bash ./release/user-package.sh nosource noconf codename=$(git describe --tags) buildname=docker-fly abpathtgz=/tmp/v2ray.tgz
+
+# 构建基础镜像
 # 指定创建的基础镜像
-FROM alpine
-# 作者信息
-MAINTAINER alpine_v2ray danxiaonuo
+FROM alpine:latest
+# 作者描述信息
+MAINTAINER danxiaonuo
 # 语言设置
-ENV LANG en_US.UTF-8
+ENV LANG zh_CN.UTF-8
 # 时区设置
 ENV TZ=Asia/Shanghai
 # 设置CONFIG_JSON为空
 ENV CONFIG_JSON=none
 # 修改源
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+# 更新源
+RUN apk upgrade
 # 同步时间
-RUN apk add -U tzdata && \
-cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-&& echo 'Asia/Shanghai' > /etc/timezone
-# 安装v2ray
-RUN apk add --no-cache --virtual .build-deps ca-certificates curl \
- && curl -L -H "Cache-Control: no-cache" -o /v2ray.zip https://github.com/v2ray/v2ray-core/releases/latest/download/v2ray-linux-64.zip \
- && mkdir /usr/bin/v2ray /etc/v2ray \
- && touch /etc/v2ray/config.json \
- && unzip /v2ray.zip -d /usr/bin/v2ray \
- && rm -rf /v2ray.zip /usr/bin/v2ray/*.sig /usr/bin/v2ray/doc /usr/bin/v2ray/*.json /usr/bin/v2ray/*.dat /usr/bin/v2ray/sys* \
- && chgrp -R 0 /etc/v2ray \
- && chmod -R g+rwX /etc/v2ray
- # 增加脚本
+RUN apk add -U tzdata \
+&& ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
+&& echo ${TZ} > /etc/timezone
+
+# 拷贝v2ray二进制文件至临时目录
+COPY --from=builder /tmp/v2ray.tgz /tmp
+
+# 授予文件权限
+RUN set -ex && \
+    apk --no-cache add ca-certificates && \
+    mkdir -p /usr/bin/v2ray /etc/v2ray && \
+	   touch /etc/v2ray/config.json && \
+    tar xvfz /tmp/v2ray.tgz -C /usr/bin/v2ray && \
+	   rm -rf /tmp/v2ray.tgz /usr/bin/v2ray/*.sig /usr/bin/v2ray/doc /usr/bin/v2ray/*.json /usr/bin/v2ray/*.dat /usr/bin/v2ray/sys* && \
+	   hgrp -R 0 /etc/v2ray && \
+    chmod -R g+rwX /etc/v2ray && \
+    chmod +x /usr/bin/v2ray/v2ctl && \
+    chmod +x /usr/bin/v2ray/v2ray
+
+# 设置环境变量
+ENV PATH /usr/bin/v2ray:$PATH
+
+# 增加脚本
 ADD configure.sh /configure.sh
 # 授权脚本权限
 RUN chmod +x /configure.sh
 # 运行脚本
 ENTRYPOINT /configure.sh
-# 暴露端口
-EXPOSE 8080
