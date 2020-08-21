@@ -38,10 +38,10 @@ COPY --from=builder /tmp/v2ray.tgz /tmp
 RUN set -ex && \
     apk --no-cache add ca-certificates && \
     mkdir -p /usr/bin/v2ray /etc/v2ray && \
-	   touch /etc/v2ray/config.json && \
+    touch /etc/v2ray/config.json && \
     tar xvfz /tmp/v2ray.tgz -C /usr/bin/v2ray && \
-	   rm -rf /tmp/v2ray.tgz /usr/bin/v2ray/*.sig /usr/bin/v2ray/doc /usr/bin/v2ray/*.json /usr/bin/v2ray/*.dat /usr/bin/v2ray/sys* && \
-	   hgrp -R 0 /etc/v2ray && \
+    rm -rf /tmp/v2ray.tgz /usr/bin/v2ray/*.sig /usr/bin/v2ray/doc /usr/bin/v2ray/*.json /usr/bin/v2ray/*.dat /usr/bin/v2ray/sys* && \
+    hgrp -R 0 /etc/v2ray && \
     chmod -R g+rwX /etc/v2ray && \
     chmod +x /usr/bin/v2ray/v2ctl && \
     chmod +x /usr/bin/v2ray/v2ray
