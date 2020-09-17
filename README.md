@@ -6,3 +6,4 @@
 ## ENV 设定
 ### CONFIG_JSON
 `CONFIG_JSON` > `服务端 Websocket 配置文件`。
+2.8.1
