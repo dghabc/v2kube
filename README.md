@@ -1,4 +1,4 @@
-# v2ray-kube
+# kube-v2ray
 ## 概述
 支持部署在kubernetes上的容器
 ## 镜像
